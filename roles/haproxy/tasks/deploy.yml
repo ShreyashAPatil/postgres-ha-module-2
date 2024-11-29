@@ -1,0 +1,40 @@
+---
+- name: Ensure HAProxy directory exists on target machine
+  ansible.builtin.file:
+    path: "{{ haproxy_directory }}"
+    state: directory
+
+- name: Download ConfigMap file from Google Drive
+  ansible.builtin.get_url:
+    url: "{{ haproxy_configmap_url }}"
+    dest: "{{ haproxy_directory }}/ha-configmap.yaml"
+
+- name: Download Deployment file from Google Drive
+  ansible.builtin.get_url:
+    url: "{{ haproxy_deployment_url }}"
+    dest: "{{ haproxy_directory }}/ha-deployment.yaml"
+
+- name: Apply ConfigMap to Kubernetes
+  ansible.builtin.shell: |
+    kubectl apply -f {{ haproxy_directory }}/ha-configmap.yaml -n {{ haproxy_namespace }}
+  args:
+    executable: /bin/bash
+
+- name: Apply Deployment to Kubernetes
+  ansible.builtin.shell: |
+    kubectl apply -f {{ haproxy_directory }}/ha-deployment.yaml -n {{ haproxy_namespace }}
+  args:
+    executable: /bin/bash
+
+- name: Wait for HAProxy pod to be in Running state
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ haproxy_namespace }}"
+  register: haproxy_pod_info
+  until: haproxy_pod_info.resources | selectattr('status.phase', 'equalto', 'Running') | list | length > 0
+  retries: 10
+  delay: 10
+
+- name: Verify HAProxy deployment status
+  debug:
+    msg: "HAProxy pods in Running state: {{ haproxy_pod_info.resources | map(attribute='metadata.name') | list }}"

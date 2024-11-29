@@ -1,0 +1,2 @@
+[postgres_group]
+postgres ansible_host=100.104.3.233 ansible_user=test ansible_password=Test@Cloudlyte2024

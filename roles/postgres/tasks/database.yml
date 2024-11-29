@@ -1,0 +1,17 @@
+---
+- name: Create databases and users
+  kubernetes.core.k8s_exec:
+    namespace: pgdata
+    pod: "{{ postgres_pod }}"
+    command: |
+      su - postgres -c "
+      {% for item in databases %}
+      psql -c \"CREATE DATABASE {{ item.name }};\"
+      psql -c \"CREATE USER {{ item.user }} WITH PASSWORD '{{ item.password }}';\"
+      psql -c \"GRANT ALL PRIVILEGES ON DATABASE {{ item.name }} TO {{ item.user }};\"
+      psql -d {{ item.name }} -c \"CREATE SCHEMA {{ item.schema }} AUTHORIZATION {{ item.user }};\"
+      psql -d {{ item.name }} -c \"ALTER SCHEMA {{ item.schema }} OWNER TO {{ item.user }};\"
+      psql -d {{ item.name }} -c \"ALTER ROLE {{ item.user }} SET search_path TO '{{ item.schema }}', 'public';\"
+      {% endfor %}
+      "
+  with_items: "{{ databases }}"

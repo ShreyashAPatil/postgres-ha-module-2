@@ -1,0 +1,38 @@
+---
+- name: Get list of pods in the pgdata namespace
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: pgdata
+  register: pod_facts
+
+- name: Set the pod name dynamically
+  set_fact:
+    postgres_pod: "{{ pod_facts.resources | selectattr('metadata.name', 'search', 'postgres-cluster-*') | map(attribute='metadata.name') | first }}"
+
+- name: Ensure that we have a pod name
+  fail:
+    msg: "No matching PostgreSQL pod found"
+  when: postgres_pod is not defined or postgres_pod == ""
+
+
+- name: Update PostgreSQL configuration in Kubernetes
+  kubernetes.core.k8s:
+    name: postgres-cluster
+    namespace: pgdata
+    kind: StatefulSet
+    state: present
+    merge_type: merge
+    resource_definition:
+      spec:
+        postgresql:
+          parameters:
+            listen_addresses: "*"
+          pg_hba:
+            - "local all all trust"
+            - "host all all 127.0.0.1/32 trust"
+            - "host all all ::1/128 trust"
+            - "local all ambari trust"
+            - "host all ambari 0.0.0.0/0 trust"
+            - "host all all 0.0.0.0/0 md5"
+            - "host replication all 0.0.0.0/0 md5"
+            - "host standby all 0.0.0.0/0 md5"

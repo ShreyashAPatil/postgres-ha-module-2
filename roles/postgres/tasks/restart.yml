@@ -1,0 +1,21 @@
+---
+- name: Delete the PostgreSQL pod to force restart
+  kubernetes.core.k8s:
+    name: "{{ postgres_pod }}"
+    namespace: pgdata
+    kind: Pod
+    state: absent
+
+- name: Wait for PostgreSQL pod to be ready
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: pgdata
+    name: "{{ postgres_pod }}"
+  register: pod_status
+  until: pod_status.resources[0].status.phase == "Running"
+  retries: 5
+  delay: 10
+
+- name: Wait additional time for PostgreSQL to be fully ready
+  pause:
+    seconds: 30

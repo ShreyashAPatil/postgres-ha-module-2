@@ -1,0 +1,7 @@
+---
+- name: Create HAProxy namespace if it doesn't exist
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ haproxy_namespace }}"
+    state: present

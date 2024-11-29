@@ -1,0 +1,35 @@
+---
+- name: Automate PostgreSQL setup for Ambari and HAProxy Deployment
+  hosts: postgres_group
+  vars:
+    # PostgreSQL Databases
+    databases:
+      - name: "ambari"
+        user: "ambari"
+        password: "ambari"
+        schema: "ambari"
+      - name: "hive"
+        user: "hiveadmin"
+        password: "hiveadmin@123"
+        schema: "hive"
+      - name: "ranger"
+        user: "rangeradmin"
+        password: "Rangeradmin@123"
+        schema: "ranger"
+
+    ambari_db_name: "ambari"
+    ambari_user_name: "ambari"
+
+    # SQL file
+    ddl_file_url: "https://drive.google.com/uc?export=download&id=1lAGNOybJhC0aMLdBwwh1Iehm-FMe-wYH"
+
+
+    # HAProxy variables
+    haproxy_namespace: haproxy
+    haproxy_directory: /home/test/HA-Proxy
+    haproxy_configmap_url: "https://drive.google.com/uc?export=download&id=1fPUhKFeddRoUprL2Ie-j8RryypeSN8gp"
+    haproxy_deployment_url: "https://drive.google.com/uc?export=download&id=1JVdsUNQOfPdZ1RqQ_tSs4J9OqIfneNsZ"
+
+  roles:
+    - postgres
+    - haproxy

@@ -1,0 +1,12 @@
+---
+- name: Download Ambari DDL file inside the pod
+  kubernetes.core.k8s_exec:
+    pod: "{{ postgres_pod }}"
+    namespace: pgdata
+    command: "/bin/bash -c 'curl -L \"{{ ddl_file_url }}\" -o Ambari-DDL-Postgres-CREATE.sql'"
+
+- name: Execute Ambari DDL file in PostgreSQL pod
+  kubernetes.core.k8s_exec:
+    pod: "{{ postgres_pod }}"
+    namespace: pgdata
+    command: "/bin/bash -c 'psql -f Ambari-DDL-Postgres-CREATE.sql -U {{ ambari_user_name }} -p 5432 -d {{ ambari_db_name }}'"
